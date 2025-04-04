@@ -1,6 +1,7 @@
 package config
 
 import (
+	"Backend/models"
 	"fmt"
 	"log"
 	"os"
@@ -33,4 +34,12 @@ func ConnectDatabase() {
 
     DB = database
     fmt.Println("Database connected successfully!")
+}
+
+func MigrateDatabase() {
+    err := DB.AutoMigrate(&models.User{})
+    if err != nil {
+        panic("Failed to migrate database: " + err.Error())
+    }
+    fmt.Println("Database migration successful!")
 }
