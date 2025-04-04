@@ -2,6 +2,7 @@ package main
 
 import (
 	"Backend/config"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,6 +12,7 @@ func main() {
 
     // เชื่อมต่อฐานข้อมูล
     config.ConnectDatabase()
+    fmt.Println("✅ Database connection initialized!")
 
     r.Run(":8080")
 }
