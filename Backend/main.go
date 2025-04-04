@@ -2,17 +2,31 @@ package main
 
 import (
 	"Backend/config"
-	"fmt"
+	"Backend/routes" // นำเข้า routes
 
+	"github.com/gin-contrib/cors" // นำเข้า CORS
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-    r := gin.Default()
+	r := gin.Default()
 
-    // เชื่อมต่อฐานข้อมูล
-    config.ConnectDatabase()
-    fmt.Println("✅ Database connection initialized!")
+	// กำหนดการตั้งค่า CORS
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"}, // หรือพอร์ตที่คุณใช้ในการรัน React
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
 
-    r.Run(":8080")
+	// เชื่อมต่อกับฐานข้อมูล
+	config.ConnectDatabase()
+
+    config.MigrateDatabase()
+
+	// ตั้งค่า routes สำหรับ Auth
+	routes.SetupAuthRoutes(r)
+
+	// รัน server
+	r.Run(":8080")
 }
