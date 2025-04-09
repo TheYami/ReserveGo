@@ -1,7 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
+import {useNavigate } from "react-router-dom";
 
 const AuthPage = () => {
+  const navigate = useNavigate();
   const [isRegister, setIsRegister] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -24,33 +26,39 @@ const AuthPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    // ตรวจสอบว่า password และ confirmPassword ตรงกันหรือไม่
-    if (formData.password !== formData.confirmPassword) {
+    if (isRegister && formData.password !== formData.confirmPassword) {
       setMessage("Passwords do not match.");
       return;
     }
-
+  
     try {
-      const currentTime = new Date().toISOString(); 
-      let endpoint = isRegister ? "http://localhost:8080/auth/register" : "http://localhost:8080/auth/login";
-      let payload = isRegister
-        ? { 
-            name: formData.fullName, 
-            email: formData.email, 
-            phone: formData.phone, 
-            role: formData.role, 
+      const currentTime = new Date().toISOString();
+      const endpoint = isRegister
+        ? "http://localhost:8080/auth/register"
+        : "http://localhost:8080/auth/login";
+  
+      const payload = isRegister
+        ? {
+            name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            role: formData.role,
             password: formData.password,
             createdAt: currentTime,
-            updatedAt: currentTime 
+            updatedAt: currentTime,
           }
-        : { email: formData.email, password: formData.password };
-
-      const res = await axios.post(endpoint, payload);
-      setMessage(res.data.message);
-      if (isRegister) {
-        setIsRegister(false); // เปลี่ยนสถานะเป็น login page
+        : {
+            email: formData.email,
+            password: formData.password,
+          };
   
-        // เคลียร์ formData
+      const res = await axios.post(endpoint, payload);
+      const data = res.data;
+  
+      setMessage(data.message);
+  
+      if (isRegister) {
+        setIsRegister(false);
         setFormData({
           fullName: "",
           email: "",
@@ -59,6 +67,18 @@ const AuthPage = () => {
           password: "",
           confirmPassword: "",
         });
+      } else {
+        // 🧠 หลังจาก login สำเร็จ
+        const userRole = data.user?.role || "customer"; // สมมุติว่า backend ส่ง user.role กลับมา
+  
+        // 🔀 เปลี่ยนหน้า
+        if (userRole === "customer") {
+          navigate("/customerPage");
+        } else if (userRole === "merchant") {
+          navigate("/merchantPage");
+        } else {
+          setMessage("Unknown role. Cannot redirect.");
+        }
       }
     } catch (error) {
       setMessage(error.response?.data?.error || "Something went wrong");

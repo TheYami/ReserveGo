@@ -68,3 +68,40 @@ func Register(c *gin.Context) {
     // ส่ง response สำเร็จ
     c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
 }
+
+func Login(c *gin.Context) {
+	var input struct {
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	// ดึงข้อมูลจาก request body
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password are required"})
+		return
+	}
+
+	// ค้นหาผู้ใช้ด้วยอีเมล
+	var user models.User
+	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+
+	// ตรวจสอบรหัสผ่าน
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+
+	// ✅ ส่ง response สำเร็จ (ยังไม่ใช้ JWT)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+		"user": gin.H{
+			"id":    user.ID,
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+		},
+	})
+}
